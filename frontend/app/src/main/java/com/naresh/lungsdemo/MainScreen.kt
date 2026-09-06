@@ -218,6 +218,74 @@ fun SpeakerControlScreen() {
                     Text("➕")
                 }
             }
+
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorResource(
+                        R.color.checkStatus
+                    )
+                ),
+                onClick = {
+                    coroutineScope.launch {
+                        isLoading = true
+
+                        try {
+                            val response =
+                                apiService.getStatus()
+
+                            if (response.isSuccessful) {
+                                val body = response.body()
+
+                                currentStatus =
+                                    "Playing: ${body?.playing}\n" +
+                                            "Speaker: ${body?.current_speaker}"
+                            } else {
+                                currentStatus =
+                                    "Error: ${response.code()}"
+                            }
+                        } catch (e: Exception) {
+                            currentStatus =
+                                "Error: ${e.localizedMessage}"
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Text(
+                    text = "Check Status",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+
+            Button(
+                onClick = {
+                    context.startActivity(
+                        Intent(
+                            context,
+                            Quiz::class.java
+                        )
+                    )
+                },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor =
+                        colorResource(R.color.buttonColor)
+                )
+            ) {
+                Text(
+                    text = "Take Quiz",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             currentStatus?.let {
                 Text(text = it)
             }
