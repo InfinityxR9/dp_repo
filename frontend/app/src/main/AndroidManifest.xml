@@ -16,21 +16,6 @@
         android:theme="@style/Theme.Lungsdemo"
         tools:targetApi="31">
         <activity
-            android:name=".SplashScreen"
-            android:exported="false"
-            android:label="@string/title_activity_splash_screen"
-            android:theme="@style/Theme.Lungsdemo" />
-        <activity
-            android:name=".LoginUser"
-            android:exported="false"
-            android:label="@string/title_activity_login_user"
-            android:theme="@style/Theme.Lungsdemo" />
-        <activity
-            android:name=".RegisterUser"
-            android:exported="false"
-            android:label="@string/title_activity_register_user"
-            android:theme="@style/Theme.Lungsdemo" />
-        <activity
             android:name=".Quiz"
             android:exported="false"
             android:label="@string/title_activity_quiz"

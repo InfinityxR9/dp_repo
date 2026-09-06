@@ -49,8 +49,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 
 class MainScreen : ComponentActivity() {
 
@@ -220,107 +218,6 @@ fun SpeakerControlScreen() {
                     Text("➕")
                 }
             }
-
-            Button(
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(
-                        R.color.checkStatus
-                    )
-                ),
-                onClick = {
-                    coroutineScope.launch {
-                        isLoading = true
-
-                        try {
-                            val response =
-                                apiService.getStatus()
-
-                            if (response.isSuccessful) {
-                                val body = response.body()
-
-                                currentStatus =
-                                    "Playing: ${body?.playing}\n" +
-                                            "Speaker: ${body?.current_speaker}"
-                            }
-                        } catch (e: Exception) {
-                            currentStatus =
-                                "Error: ${e.localizedMessage}"
-                        } finally {
-                            isLoading = false
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text(
-                    text = "Check Status",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-            }
-
-            Button(
-                onClick = {
-                    context.startActivity(
-                        Intent(
-                            context,
-                            Quiz::class.java
-                        )
-                    )
-                },
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor =
-                        colorResource(R.color.buttonColor)
-                )
-            ) {
-                Text(
-                    text = "Take Quiz",
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Button(
-                onClick = {
-                    Firebase.auth.signOut()
-
-                    Toast.makeText(
-                        context,
-                        "Logged out successfully",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    val intent = Intent(
-                        context,
-                        MainActivity::class.java
-                    )
-
-                    intent.flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK or
-                                Intent.FLAG_ACTIVITY_CLEAR_TASK
-
-                    context.startActivity(intent)
-                },
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red
-                )
-            ) {
-                Text(
-                    text = "Logout",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-
             currentStatus?.let {
                 Text(text = it)
             }
