@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Lungsdemo"
+        tools:targetApi="31">
+        <activity
+            android:name=".SplashScreen"
+            android:exported="false"
+            android:label="@string/title_activity_splash_screen"
+            android:theme="@style/Theme.Lungsdemo" />
+        <activity
+            android:name=".ui.PlaySoundSIngleDisease"
+            android:exported="false"
+            android:label="@string/title_activity_play_sound_single_disease"
+            android:theme="@style/Theme.Lungsdemo" />
+        <activity
+            android:name=".LoginUser"
+            android:exported="false"
+            android:label="@string/title_activity_login_user"
+            android:theme="@style/Theme.Lungsdemo" />
+        <activity
+            android:name=".RegisterUser"
+            android:exported="false"
+            android:label="@string/title_activity_register_user"
+            android:theme="@style/Theme.Lungsdemo" />
+        <activity
+            android:name=".Quiz"
+            android:exported="false"
+            android:label="@string/title_activity_quiz"
+            android:theme="@style/Theme.Lungsdemo" />
+        <activity
+            android:name=".MainScreen"
+            android:exported="false"
+            android:label="@string/title_activity_main_screen"
+            android:theme="@style/Theme.Lungsdemo" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Lungsdemo">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
