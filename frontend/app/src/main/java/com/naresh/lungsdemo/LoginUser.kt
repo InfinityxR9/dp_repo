@@ -28,7 +28,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,7 +46,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.ktx.auth
@@ -55,14 +53,21 @@ import com.google.firebase.ktx.Firebase
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
 
 class LoginUser : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
+
         setContent {
             LungsdemoTheme {
-               Surface {
-
-               }
+                Surface {
+                    LoginScreen(
+                        onGoogleSignInClick = {
+                            // Google Sign-In will be implemented later
+                        }
+                    )
+                }
             }
         }
     }
@@ -71,27 +76,41 @@ class LoginUser : ComponentActivity() {
 @Composable
 fun LoginScreen(onGoogleSignInClick: () -> Unit) {
     val context = LocalContext.current
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
+
     val auth = Firebase.auth
-    Image(
-        painter = painterResource(id = R.drawable.background), contentDescription = "Background",
-        Modifier.fillMaxSize()
-    )
+
+    IconButton(
+        onClick = onGoogleSignInClick
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.google),
+            contentDescription = "Sign in with Google",
+            modifier = Modifier.size(25.dp)
+        )
+    }
+
     Column {
-        Spacer(modifier = Modifier.fillMaxHeight(.1f))
+        Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+
         Row(
-            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Login here", fontSize = 36.sp,
+                text = "Login here",
+                fontSize = 36.sp,
                 color = colorResource(id = R.color.Login),
                 fontWeight = FontWeight.Medium
             )
         }
+
         Spacer(modifier = Modifier.height(4.dp))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
@@ -104,13 +123,16 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                 style = MaterialTheme.typography.titleSmall
             )
         }
+
         Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
             OutlinedTextField(
-                value = email, onValueChange = { email = it },
+                value = email,
+                onValueChange = { email = it },
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .border(
@@ -125,16 +147,21 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                     focusedContainerColor = colorResource(id = R.color.email),
                     unfocusedContainerColor = colorResource(id = R.color.email)
                 ),
-                placeholder = { Text(text = "Email") }
+                placeholder = {
+                    Text(text = "Email")
+                }
             )
         }
+
         Spacer(modifier = Modifier.fillMaxHeight(0.06f))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
             OutlinedTextField(
-                value = password, onValueChange = { password = it },
+                value = password,
+                onValueChange = { password = it },
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .border(
@@ -149,11 +176,15 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                     focusedContainerColor = colorResource(id = R.color.email),
                     unfocusedContainerColor = colorResource(id = R.color.email)
                 ),
-                placeholder = { Text(text = "Password") },
+                placeholder = {
+                    Text(text = "Password")
+                },
                 visualTransformation = PasswordVisualTransformation()
             )
         }
+
         Spacer(modifier = Modifier.fillMaxHeight(0.04f))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
@@ -161,6 +192,7 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
             Text(
                 text = buildAnnotatedString {
                     append("Forgot password?")
+
                     addStyle(
                         style = SpanStyle(
                             textDecoration = TextDecoration.Underline,
@@ -171,11 +203,13 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                     )
                 },
                 modifier = Modifier
-                    .clickable(onClick = { })
+                    .clickable(onClick = {})
                     .padding(end = 12.dp)
             )
         }
+
         Spacer(modifier = Modifier.fillMaxHeight(0.08f))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
@@ -184,28 +218,45 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                 onClick = {
                     if (email.isNotEmpty() && password.isNotEmpty()) {
                         loading = true
-                        auth.signInWithEmailAndPassword(email, password)
-                            .addOnCompleteListener { task ->
-                                loading = false
-                                if (task.isSuccessful) {
-                                    Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT)
-                                        .show()
-                                    // Navigate to another screen or perform further actions
-                                } else {
-                                    Log.d("Login failed", task.exception?.message.toString())
-                                    Toast.makeText(
-                                        context,
-                                        "Login failed: ${task.exception?.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
+
+                        auth.signInWithEmailAndPassword(
+                            email.trim(),
+                            password
+                        ).addOnCompleteListener { task ->
+
+                            loading = false
+
+                            if (task.isSuccessful) {
+                                Toast.makeText(
+                                    context,
+                                    "Login successful",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                val intent = Intent(
+                                    context,
+                                    MainActivity::class.java
+                                )
+
+                                intent.flags =
+                                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+                                context.startActivity(intent)
+
+                            } else {
+                                Log.d(
+                                    "Login failed",
+                                    task.exception?.message.toString()
+                                )
+
+                                Toast.makeText(
+                                    context,
+                                    "Login failed: ${task.exception?.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
-                    } else {
-                        Toast.makeText(
-                            context,
-                            "Please enter email and password",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        }
                     }
                 },
                 modifier = Modifier
@@ -217,7 +268,9 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                 )
             ) {
                 if (loading) {
-                    CircularProgressIndicator(color = colorResource(id = R.color.white))
+                    CircularProgressIndicator(
+                        color = colorResource(id = R.color.white)
+                    )
                 } else {
                     Text(
                         text = "Sign in",
@@ -228,7 +281,9 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                 }
             }
         }
+
         Spacer(modifier = Modifier.fillMaxHeight(0.08f))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
@@ -236,6 +291,7 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
             Text(
                 text = buildAnnotatedString {
                     append("Create new account")
+
                     addStyle(
                         style = SpanStyle(
                             textDecoration = TextDecoration.Underline,
@@ -246,15 +302,17 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                     )
                 },
                 modifier = Modifier
-                    .clickable(onClick = {
+                    .clickable {
                         val intent = Intent(context, RegisterUser::class.java)
                         context.startActivity(intent)
-                    })
+                    }
                     .fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
         }
+
         Spacer(modifier = Modifier.fillMaxHeight(0.11f))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
@@ -267,9 +325,11 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                 textAlign = TextAlign.Center
             )
         }
+
         Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+
         Row(
-            Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -280,9 +340,10 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
                     modifier = Modifier.size(25.dp)
                 )
             }
+
             Spacer(modifier = Modifier.fillMaxWidth(0.05f))
-            IconButton(onClick = {
-            }) {
+
+            IconButton(onClick = {}) {
                 Image(
                     painter = painterResource(id = R.drawable.facebook),
                     contentDescription = "facebook",
@@ -291,6 +352,7 @@ fun LoginScreen(onGoogleSignInClick: () -> Unit) {
             }
 
             Spacer(modifier = Modifier.fillMaxWidth(0.08f))
+
             Image(
                 painter = painterResource(id = R.drawable.microsoft),
                 contentDescription = "microsoft",

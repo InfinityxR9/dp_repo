@@ -9,12 +9,15 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface SpeakerApiService {
+
     @POST("/play")
-    suspend fun playSound(@Body playRequest: PlayRequest):Response<ApiResponse>
+    suspend fun playSound(
+        @Body playRequest: PlayRequest
+    ): Response<ApiResponse>
 
     @POST("/stop")
-    suspend fun stopSound():Response<ApiResponse>
+    suspend fun stopSound(): Response<ApiResponse>
 
     @GET("/status")
-    suspend fun getStatus():Response<StatusResponse>
+    suspend fun getStatus(): Response<StatusResponse>
 }

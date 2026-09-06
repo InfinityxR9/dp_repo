@@ -21,11 +21,6 @@
             android:label="@string/title_activity_splash_screen"
             android:theme="@style/Theme.Lungsdemo" />
         <activity
-            android:name=".ui.PlaySoundSIngleDisease"
-            android:exported="false"
-            android:label="@string/title_activity_play_sound_single_disease"
-            android:theme="@style/Theme.Lungsdemo" />
-        <activity
             android:name=".LoginUser"
             android:exported="false"
             android:label="@string/title_activity_login_user"
