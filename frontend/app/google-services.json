@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "823209635265",
+    "project_id": "lungsdemo",
+    "storage_bucket": "lungsdemo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:823209635265:android:9a5f2286f0571c60071340",
+        "android_client_info": {
+          "package_name": "com.naresh.lungsdemo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "823209635265-5d91hf8gddar99vs4gl635not4ipl7oc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.naresh.lungsdemo",
+            "certificate_hash": "34785a8032c7bdd47c0e4fbedd84ae548decbe09"
+          }
+        },
+        {
+          "client_id": "823209635265-mmg59eeunsalre1qoiknf6jfgp9gkvvn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8huyZbR1GQ4ODPGSMEH8TsZHaz-wUGBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "823209635265-mmg59eeunsalre1qoiknf6jfgp9gkvvn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
