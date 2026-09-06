@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Root IDE metadata
+.idea/
+
+# Environment / secrets
+.env
+.env.*
