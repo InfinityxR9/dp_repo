@@ -53,7 +53,7 @@ import java.io.IOException
 class MainScreen : ComponentActivity() {
 
     companion object {
-        const val BASE_URL = "http://10.230.233.226:5000/"
+        const val BASE_URL = "http://10.127.96.226:5000/"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
