@@ -4,6 +4,7 @@ import com.naresh.lungsdemo.model.ApiResponse
 import com.naresh.lungsdemo.model.HealthResponse
 import com.naresh.lungsdemo.model.PlayRequest
 import com.naresh.lungsdemo.model.StatusResponse
+import com.naresh.lungsdemo.model.VolumeRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -29,6 +30,10 @@ interface SpeakerApiService {
     @POST("api/stop")
     suspend fun stopSound(): Response<ApiResponse>
 
+    @POST("api/volume")
+    suspend fun setVolume(
+        @Body volumeRequest: VolumeRequest
+    ): Response<ApiResponse>
 
     @POST("api/select/{location}")
     suspend fun selectLocation(
