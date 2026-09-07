@@ -3,60 +3,72 @@
 from pathlib import Path
 
 # -----------------------------------------------------------------------------
-# Serial / Arduino
+# Arduino serial
 # -----------------------------------------------------------------------------
-SERIAL_PORT = "/dev/ttyACM0"       # Change if the Mega appears as another device.
+SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 115200
 SERIAL_TIMEOUT = 0.02
 
 # -----------------------------------------------------------------------------
 # MAX98357A SD_MODE GPIOs
 # -----------------------------------------------------------------------------
-# PLACEHOLDERS: fill these in only after you decide the final Pi GPIO allocation.
-# The numbers below are intentionally NOT chosen for you.
+# BCM GPIO numbers. These are a recommended starting allocation for a Pi 4.
+# Change them here if your final physical wiring differs.
+# IMPORTANT: SD_MODE must NOT remain connected directly to 3.3 V once you use
+# individual amplifier selection.
 AMP_SD_PINS = {
-    1: None,
-    2: None,
-    3: None,
-    4: None,
-    5: None,
-    6: None,
-    7: None,
+    1: 4,
+    2: 5,
+    3: 6,
+    4: 12,
+    5: 13,
+    6: 16,
+    7: 17,
 }
+
+# The I2S pins remain shared by every MAX98357A:
+#   BCLK  -> BCM GPIO18
+#   LRCLK -> BCM GPIO19
+#   DIN   -> BCM GPIO21
+# Do not assign those pins to SD_MODE.
 
 # -----------------------------------------------------------------------------
 # Audio
 # -----------------------------------------------------------------------------
 AUDIO_SAMPLE_RATE = 48000
 AUDIO_BUFFER = 256
+AUDIO_UPDATE_INTERVAL = 0.005  # 5 ms
 
-# Keep the physical room volume conservative.  Tune this on the real system.
+# Global ceiling for physical speaker loudness.
+# 0.30 is deliberately conservative for the stethoscope-oriented trainer.
 MAX_AUDIO_VOLUME = 0.30
+VOLUME_SMOOTHING = 0.25
 
-# Faster response = larger value.  This is applied every ~5 ms.
-VOLUME_SMOOTHING = 0.20
+# Pygame/SDL should use the MAX98357A ALSA device explicitly by name so card
+# numbering changes do not redirect audio to HDMI/headphones.
+ALSA_DEVICE = "plughw:CARD=MAX98357A,DEV=0"
 
 # -----------------------------------------------------------------------------
 # Audio library
 # -----------------------------------------------------------------------------
 AUDIO_DIR = Path(__file__).resolve().parent / "audio"
 
-# IDs used by Android / REST. Values are the exact filenames shown in your
-# audio/ directory screenshot.
+# These are the canonical names to create after converting your source MPEG/MP3
+# files to 48 kHz, 16-bit PCM WAV files.
 AUDIO_FILES = {
-    "bronchial": AUDIO_DIR / "Bronchial BS.mp3.mpeg",
-    "crackle": AUDIO_DIR / "Crackle lung.mp3.mpeg",
-    "pleural_rub": AUDIO_DIR / "Pleural rub lung .mp3.mpeg",
-    "ronchi": AUDIO_DIR / "Ronchi lung.mp3.mpeg",
-    "stridor": AUDIO_DIR / "Stridor lung.mp3.mpeg",
-    "vesicular": AUDIO_DIR / "Vesicular BS.mp3.mpeg",
-    "wheeze": AUDIO_DIR / "Wheeze lung.mp3.mpeg",
+    "bronchial": AUDIO_DIR / "bronchial.wav",
+    "crackle": AUDIO_DIR / "crackle.wav",
+    "pleural_rub": AUDIO_DIR / "pleural_rub.wav",
+    "ronchi": AUDIO_DIR / "ronchi.wav",
+    "stridor": AUDIO_DIR / "stridor.wav",
+    "vesicular": AUDIO_DIR / "vesicular.wav",
+    "wheeze": AUDIO_DIR / "wheeze.wav",
 }
 
 DEFAULT_SOUND_ID = "vesicular"
 
 # -----------------------------------------------------------------------------
-# HTTP server
+# API
 # -----------------------------------------------------------------------------
 API_HOST = "0.0.0.0"
 API_PORT = 8000

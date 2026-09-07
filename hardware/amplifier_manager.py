@@ -1,21 +1,33 @@
-"""Controls the SD_MODE pins of the seven MAX98357A amplifiers."""
+"""Control the seven MAX98357A SD_MODE pins.
 
-from threading import Lock
+SD_MODE HIGH = amplifier enabled.
+SD_MODE LOW  = amplifier shutdown.
+
+The I2S audio bus itself is shared by all seven amplifiers; only one SD_MODE
+pin is enabled at a time during normal operation.
+"""
+
+from threading import RLock
 
 from gpiozero import OutputDevice
 
 
 class AmplifierManager:
     def __init__(self, pin_map):
-        self._lock = Lock()
+        self._lock = RLock()
         self.amps = {}
 
         for location, gpio in pin_map.items():
             if gpio is None:
                 continue
 
-            self.amps[int(location)] = OutputDevice(
-                int(gpio),
+            location = int(location)
+            gpio = int(gpio)
+            if not 1 <= location <= 7:
+                raise ValueError(f"Invalid amplifier location: {location}")
+
+            self.amps[location] = OutputDevice(
+                gpio,
                 active_high=True,
                 initial_value=False,
             )
@@ -28,18 +40,27 @@ class AmplifierManager:
                 amp.off()
 
     def select(self, location):
-        """Turn every amp off, then enable the requested amp."""
+        """Disable every amplifier, then enable exactly one."""
+        location = int(location)
         with self._lock:
-            for amp in self.amps.values():
-                amp.off()
+            self.all_off()
+            amp = self.amps.get(location)
+            if amp is None:
+                raise ValueError(
+                    f"No SD_MODE GPIO configured for amplifier {location}"
+                )
+            amp.on()
 
-            amp = self.amps.get(int(location))
-            if amp is not None:
-                amp.on()
+    def get_active_location(self):
+        with self._lock:
+            for location, amp in self.amps.items():
+                if amp.value:
+                    return location
+        return None
 
     def close(self):
         with self._lock:
+            self.all_off()
             for amp in self.amps.values():
-                amp.off()
                 amp.close()
             self.amps.clear()

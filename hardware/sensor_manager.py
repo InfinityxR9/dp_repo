@@ -1,13 +1,13 @@
-"""Bridges Arduino sensor events to amplifier selection and audio volume."""
+"""Map Arduino sensor events to one active amplifier and audio volume."""
 
-from threading import Lock
+from threading import RLock
 
 
 class SensorManager:
     def __init__(self, amplifier_manager, audio_manager):
-        self._lock = Lock()
         self.amplifier_manager = amplifier_manager
         self.audio_manager = audio_manager
+        self._lock = RLock()
         self.active_sensor = None
         self.pressure = 0
 
@@ -20,13 +20,14 @@ class SensorManager:
             self.active_sensor = sensor
             self.pressure = pressure
 
-        # Audio is already looping, so this only changes the active transducer.
-        # A future pop-reduction fade can be inserted here if needed.
+        if old_sensor != sensor:
+            # Avoid an abrupt I2S output change while changing the active amp.
+            self.audio_manager.fade_out(0.015)
+
         self.amplifier_manager.select(sensor)
         self.audio_manager.set_pressure(pressure)
 
-        if old_sensor != sensor:
-            print(f"[ACTIVE] sensor={sensor} pressure={pressure}%")
+        print(f"[ACTIVE] sensor={sensor} pressure={pressure}%")
 
     def pressure_update(self, sensor, pressure):
         sensor = int(sensor)

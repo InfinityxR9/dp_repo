@@ -1,15 +1,18 @@
-"""Parses the Arduino serial protocol."""
+"""Parse the Arduino serial protocol."""
 
 
 def process_serial_line(line, sensor_manager):
-    parts = line.strip().split(",")
-
-    # Arduino also sends: READY
-    if parts == ["READY"]:
-        print("Arduino reports READY.")
+    line = line.strip()
+    if not line:
         return
 
+    if line == "READY":
+        print("[ARDUINO] READY")
+        return
+
+    parts = line.split(",")
     if len(parts) != 3:
+        print(f"[SERIAL] Ignoring malformed line: {line}")
         return
 
     message_type = parts[0].strip()
@@ -18,6 +21,7 @@ def process_serial_line(line, sensor_manager):
         sensor = int(parts[1])
         pressure = int(parts[2])
     except ValueError:
+        print(f"[SERIAL] Ignoring invalid line: {line}")
         return
 
     if not 1 <= sensor <= 7:
