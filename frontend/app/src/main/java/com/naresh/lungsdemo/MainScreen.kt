@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -81,6 +83,10 @@ fun SpeakerControlScreen() {
     var masterVolume by remember {
         mutableFloatStateOf(1f)
     }
+
+    var selectedSoundId by remember {
+        mutableStateOf<String?>(null)
+    }
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = colorResource(R.color.background)
@@ -88,6 +94,7 @@ fun SpeakerControlScreen() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -111,43 +118,61 @@ fun SpeakerControlScreen() {
                 "ronchi" to "Ronchi"
             )
 
-            sounds.forEach { (id, name) ->
-                DiseaseButton(
-                    diseaseName = name
+            sounds.chunked(2).forEach { rowSounds ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    coroutineScope.launch {
-                        isLoading = true
+                    rowSounds.forEach { (id, name) ->
+                        DiseaseButton(
+                            diseaseName = name,
+                            isSelected = selectedSoundId == id,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            coroutineScope.launch {
+                                isLoading = true
 
-                        try {
-                            val response = apiService.playSound(
-                                PlayRequest(soundId = id)
-                            )
+                                try {
+                                    val response = apiService.playSound(
+                                        PlayRequest(soundId = id)
+                                    )
 
-                            if (response.isSuccessful) {
-                                Toast.makeText(
-                                    context,
-                                    response.body()?.message
-                                        ?: "$name sound started",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "Failed to play $name: ${response.code()}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                    if (response.isSuccessful) {
+                                        selectedSoundId = id
+                                        Toast.makeText(
+                                            context,
+                                            response.body()?.message
+                                                ?: "$name sound started",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Failed to play $name: ${response.code()}",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+
+                                } catch (e: Exception) {
+                                    Toast.makeText(
+                                        context,
+                                        "Connection error: ${e.localizedMessage}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+
+                                } finally {
+                                    isLoading = false
+                                }
                             }
-
-                        } catch (e: Exception) {
-                            Toast.makeText(
-                                context,
-                                "Connection error: ${e.localizedMessage}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                        } finally {
-                            isLoading = false
                         }
+                    }
+
+                    // Keeps the final single button the same width as the others.
+                    if (rowSounds.size == 1) {
+                        Spacer(
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
@@ -207,6 +232,7 @@ fun SpeakerControlScreen() {
                             val response = apiService.stopSound()
 
                             if (response.isSuccessful) {
+                                selectedSoundId = null
                                 Toast.makeText(
                                     context,
                                     response.body()?.message ?: "Sound stopped",
@@ -395,13 +421,14 @@ fun SpeakerControlScreen() {
 @Composable
 fun DiseaseButton(
     diseaseName: String,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
-            .fillMaxWidth()
             .height(50.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor =
