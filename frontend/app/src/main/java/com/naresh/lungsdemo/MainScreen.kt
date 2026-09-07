@@ -41,14 +41,6 @@ import com.naresh.lungsdemo.network.RetrofitClient
 import com.naresh.lungsdemo.network.SpeakerApiService
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
 import kotlinx.coroutines.launch
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
-import java.io.IOException
 
 class MainScreen : ComponentActivity() {
 
@@ -71,40 +63,6 @@ class MainScreen : ComponentActivity() {
     }
 }
 
-fun setVolume(baseUrl: String, volume: Float) {
-    val client = OkHttpClient()
-
-    val json = """{ "volume": $volume }"""
-
-    val body = json.toRequestBody(
-        "application/json".toMediaType()
-    )
-
-    val request = Request.Builder()
-        .url("$baseUrl/volume")
-        .post(body)
-        .build()
-
-    client.newCall(request).enqueue(
-        object : Callback {
-
-            override fun onFailure(
-                call: Call,
-                e: IOException
-            ) {
-                e.printStackTrace()
-            }
-
-            override fun onResponse(
-                call: Call,
-                response: Response
-            ) {
-                response.close()
-            }
-        }
-    )
-}
-
 @Composable
 fun SpeakerControlScreen() {
     val context = LocalContext.current
@@ -116,7 +74,6 @@ fun SpeakerControlScreen() {
 
     var isLoading by remember { mutableStateOf(false) }
     var currentStatus by remember { mutableStateOf<String?>(null) }
-    var volume by remember { mutableStateOf(0.15f) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -138,16 +95,17 @@ fun SpeakerControlScreen() {
                 fontStyle = FontStyle.Normal
             )
 
-            val diseases = listOf(
-                1 to "Bronchial",
-                2 to "Vesicular",
-                3 to "Wheeze",
-                4 to "Crackle lung",
-                5 to "Stridor",
-                6 to "Pleural rub lung"
+            val sounds = listOf(
+                "bronchial" to "Bronchial",
+                "vesicular" to "Vesicular",
+                "wheeze" to "Wheeze",
+                "crackle" to "Crackle",
+                "stridor" to "Stridor",
+                "pleural_rub" to "Pleural Rub",
+                "ronchi" to "Ronchi"
             )
 
-            diseases.forEach { (id, name) ->
+            sounds.forEach { (id, name) ->
                 DiseaseButton(
                     diseaseName = name
                 ) {
@@ -156,7 +114,7 @@ fun SpeakerControlScreen() {
 
                         try {
                             apiService.playSound(
-                                PlayRequest(id)
+                                PlayRequest(soundId = id)
                             )
                         } catch (e: Exception) {
                             Toast.makeText(
@@ -173,79 +131,36 @@ fun SpeakerControlScreen() {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Text(
-                text = "Volume Control (Stethoscope)",
-                fontWeight = FontWeight.Bold
-            )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(
-                    onClick = {
-                        if (volume > 0.05f) {
-                            volume -= 0.05f
-                            setVolume(
-                                MainScreen.BASE_URL,
-                                volume
-                            )
-                        }
-                    }
-                ) {
-                    Text("➖")
-                }
-
-                Text(
-                    text = String.format(
-                        "%.2f",
-                        volume
-                    ),
-                    fontWeight = FontWeight.Bold
-                )
-
-                Button(
-                    onClick = {
-                        if (volume < 1.0f) {
-                            volume += 0.05f
-                            setVolume(
-                                MainScreen.BASE_URL,
-                                volume
-                            )
-                        }
-                    }
-                ) {
-                    Text("➕")
-                }
-            }
-
             Button(
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(
-                        R.color.checkStatus
-                    )
-                ),
                 onClick = {
                     coroutineScope.launch {
                         isLoading = true
 
                         try {
-                            val response =
-                                apiService.getStatus()
+                            val response = apiService.stopSound()
 
                             if (response.isSuccessful) {
-                                val body = response.body()
-
-                                currentStatus =
-                                    "Playing: ${body?.playing}\n" +
-                                            "Speaker: ${body?.current_speaker}"
+                                Toast.makeText(
+                                    context,
+                                    response.body()?.message ?: "Sound stopped",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             } else {
-                                currentStatus =
-                                    "Error: ${response.code()}"
+                                Toast.makeText(
+                                    context,
+                                    "Failed to stop sound: ${response.code()}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
+
                         } catch (e: Exception) {
-                            currentStatus =
-                                "Error: ${e.localizedMessage}"
+
+                            Toast.makeText(
+                                context,
+                                "Connection error: ${e.localizedMessage}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
                         } finally {
                             isLoading = false
                         }
@@ -253,12 +168,124 @@ fun SpeakerControlScreen() {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Stop Sound",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        isLoading = true
+
+                        try {
+                            val response = apiService.getStatus()
+
+                            if (response.isSuccessful) {
+
+                                val status = response.body()
+
+                                val message = """
+                        Running: ${status?.running}
+                        Active Sensor: ${status?.activeSensor ?: "None"}
+                        Pressure: ${status?.pressure ?: 0}%
+                        Sound: ${status?.soundId ?: "None"}
+                        Audio Volume: ${status?.audioVolume ?: 0f}
+                    """.trimIndent()
+
+                                Toast.makeText(
+                                    context,
+                                    message,
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                            } else {
+
+                                Toast.makeText(
+                                    context,
+                                    "Failed to get status: ${response.code()}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                        } catch (e: Exception) {
+
+                            Toast.makeText(
+                                context,
+                                "Connection error: ${e.localizedMessage}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Check Status",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        isLoading = true
+
+                        try {
+                            val response = apiService.health()
+
+                            if (response.isSuccessful) {
+
+                                val health = response.body()
+
+                                Toast.makeText(
+                                    context,
+                                    health?.message ?: "Raspberry Pi Connected",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                            } else {
+
+                                Toast.makeText(
+                                    context,
+                                    "Pi responded with error: ${response.code()}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                        } catch (e: Exception) {
+
+                            Toast.makeText(
+                                context,
+                                "Cannot connect to Raspberry Pi: ${e.localizedMessage}",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Check Raspberry Pi Connection",
+                    fontWeight = FontWeight.Bold
                 )
             }
 

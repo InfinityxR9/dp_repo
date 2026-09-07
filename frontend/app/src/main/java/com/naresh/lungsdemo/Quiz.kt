@@ -63,17 +63,18 @@ class Quiz : ComponentActivity() {
 }
 
 val diseases = listOf(
-    1 to "bronchial",
-    2 to "vesicular",
-    3 to "wheeze",
-    4 to "crackle lung",
-    5 to "stridor",
-    6 to "pleural rub lung"
+    "bronchial" to "Bronchial",
+    "vesicular" to "Vesicular",
+    "wheeze" to "Wheeze",
+    "crackle" to "Crackle",
+    "stridor" to "Stridor",
+    "pleural_rub" to "Pleural Rub",
+    "ronchi" to "Ronchi"
 )
 
 private fun generateQuestion(): Pair<
-        Pair<Int, String>,
-        List<Pair<Int, String>>
+        Pair<String, String>,
+        List<Pair<String, String>>
         > {
     val correctDisease = diseases.random()
 
@@ -124,7 +125,7 @@ fun QuizScreen() {
     }
 
     var selectedOption by remember {
-        mutableStateOf<Pair<Int, String>?>(null)
+        mutableStateOf<Pair<String, String>?>(null)
     }
 
     var questionCount by remember {
@@ -142,14 +143,14 @@ fun QuizScreen() {
             try {
                 val response = apiService.playSound(
                     PlayRequest(
-                        disease_number = correctDisease.first
+                        soundId = correctDisease.first
                     )
                 )
 
                 if (response.isSuccessful) {
                     Log.d(
                         "QuizScreen",
-                        "Play request successful for disease number: ${correctDisease.first}"
+                        "Play request successful for soundId: ${correctDisease.first}"
                     )
                 } else {
                     Log.e(
@@ -407,11 +408,11 @@ fun QuizScreen() {
 
 @Composable
 fun QuizWithSelectableOptions(
-    options: List<Pair<Int, String>>,
-    selectedOption: Pair<Int, String>?,
-    correctOption: Pair<Int, String>,
+    options: List<Pair<String, String>>,
+    selectedOption: Pair<String, String>?,
+    correctOption: Pair<String, String>,
     showResult: Boolean,
-    onOptionSelected: (Pair<Int, String>) -> Unit
+    onOptionSelected: (Pair<String, String>) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
