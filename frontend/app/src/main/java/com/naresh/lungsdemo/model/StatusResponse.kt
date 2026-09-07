@@ -5,5 +5,6 @@ data class StatusResponse(
     val activeSensor: Int?,
     val pressure: Int,
     val soundId: String?,
-    val audioVolume: Float
+    val audioVolume: Float,
+    val masterVolume: Float
 )

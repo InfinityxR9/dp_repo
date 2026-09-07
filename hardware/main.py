@@ -82,6 +82,9 @@ def check_audio_files():
             print(f"        {path}")
         print("[AUDIO] Convert/copy your seven lung sounds into audio/*.wav")
 
+class VolumeRequest(BaseModel):
+    volume: float
+
 
 # -----------------------------------------------------------------------------
 # Background workers
@@ -185,16 +188,12 @@ def state():
     with state_lock:
         connected = arduino_connected
 
-    return {
-        "running": True,
+        return {
+        "running": audio_state["playing"],
         "arduinoConnected": connected,
         "activeSensor": sensor_state["activeSensor"],
         "pressure": sensor_state["pressure"],
-        "soundId": (
-            Path(audio_manager.current_sound).stem
-            if audio_manager.current_sound
-            else None
-        ),
+        "soundId": audio_state["sound"],
         "audioPlaying": audio_state["playing"],
         "audioVolume": audio_state["volume"],
         "targetVolume": audio_state["targetVolume"],
@@ -239,6 +238,24 @@ def stop():
     audio_manager.stop()
     print("[STOP]")
     return {"success": True, "message": "stopped"}
+
+@app.post("/api/volume")
+def set_volume(request: VolumeRequest):
+    if not 0.0 <= request.volume <= 1.0:
+        raise HTTPException(
+            status_code=400,
+            detail="volume must be between 0.0 and 1.0",
+        )
+
+    audio_manager.set_master_volume(
+        request.volume
+    )
+
+    return {
+        "success": True,
+        "message": "master volume updated",
+        "volume": audio_manager.get_master_volume(),
+    }
 
 
 @app.post("/api/volume")
