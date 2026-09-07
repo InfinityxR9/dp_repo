@@ -1,38 +1,34 @@
-"""Control the seven MAX98357A SD_MODE pins.
+"""Controls the seven MAX98357A SD_MODE GPIOs."""
 
-SD_MODE HIGH = amplifier enabled.
-SD_MODE LOW  = amplifier shutdown.
-
-The I2S audio bus itself is shared by all seven amplifiers; only one SD_MODE
-pin is enabled at a time during normal operation.
-"""
-
-from threading import RLock
+from threading import Lock
 
 from gpiozero import OutputDevice
 
 
 class AmplifierManager:
-    def __init__(self, pin_map):
-        self._lock = RLock()
+    def __init__(self, pin_map, active_high=True):
+        self._lock = Lock()
         self.amps = {}
+        self.configured = {}
 
-        for location, gpio in pin_map.items():
+        for location in range(1, 8):
+            gpio = pin_map.get(location)
+            self.configured[location] = gpio is not None
+
             if gpio is None:
                 continue
 
-            location = int(location)
-            gpio = int(gpio)
-            if not 1 <= location <= 7:
-                raise ValueError(f"Invalid amplifier location: {location}")
-
             self.amps[location] = OutputDevice(
-                gpio,
-                active_high=True,
+                int(gpio),
+                active_high=active_high,
                 initial_value=False,
             )
 
         self.all_off()
+        print(
+            "[AMP] configured locations: "
+            + str(self.get_configured_locations())
+        )
 
     def all_off(self):
         with self._lock:
@@ -40,27 +36,38 @@ class AmplifierManager:
                 amp.off()
 
     def select(self, location):
-        """Disable every amplifier, then enable exactly one."""
+        """Enable exactly one configured amplifier."""
         location = int(location)
+        if not 1 <= location <= 7:
+            raise ValueError("location must be 1..7")
+
         with self._lock:
-            self.all_off()
+            for amp in self.amps.values():
+                amp.off()
+
             amp = self.amps.get(location)
             if amp is None:
-                raise ValueError(
-                    f"No SD_MODE GPIO configured for amplifier {location}"
+                print(
+                    f"[AMP] WARNING: location {location} has no SD GPIO configured"
                 )
-            amp.on()
+                return False
 
-    def get_active_location(self):
-        with self._lock:
-            for location, amp in self.amps.items():
-                if amp.value:
-                    return location
-        return None
+            amp.on()
+            print(f"[AMP] location {location} ON; all others OFF")
+            return True
+
+    def is_configured(self, location):
+        return bool(self.configured.get(int(location), False))
+
+    def get_configured_locations(self):
+        return [
+            loc for loc in range(1, 8)
+            if self.configured.get(loc, False)
+        ]
 
     def close(self):
         with self._lock:
-            self.all_off()
             for amp in self.amps.values():
+                amp.off()
                 amp.close()
             self.amps.clear()

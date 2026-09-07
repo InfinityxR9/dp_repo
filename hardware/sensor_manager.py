@@ -1,33 +1,40 @@
-"""Map Arduino sensor events to one active amplifier and audio volume."""
+"""Map Arduino events to amplifier selection and pressure-controlled audio."""
 
-from threading import RLock
+from threading import Lock
 
 
 class SensorManager:
-    def __init__(self, amplifier_manager, audio_manager):
+    def __init__(self, amplifier_manager, audio_manager, switch_mute_ms=12):
+        self._lock = Lock()
         self.amplifier_manager = amplifier_manager
         self.audio_manager = audio_manager
-        self._lock = RLock()
+        self.switch_mute_ms = max(0, int(switch_mute_ms))
+
         self.active_sensor = None
         self.pressure = 0
 
     def activation(self, sensor, pressure):
         sensor = int(sensor)
         pressure = max(0, min(100, int(pressure)))
+        if not 1 <= sensor <= 7:
+            return
 
         with self._lock:
             old_sensor = self.active_sensor
             self.active_sensor = sensor
             self.pressure = pressure
 
-        if old_sensor != sensor:
-            # Avoid an abrupt I2S output change while changing the active amp.
-            self.audio_manager.fade_out(0.015)
+        # Mute before changing physical amplifier to avoid a hard output jump.
+        if old_sensor is not None and old_sensor != sensor:
+            self.audio_manager.ramp_to_zero(self.switch_mute_ms)
 
-        self.amplifier_manager.select(sensor)
+        selected = self.amplifier_manager.select(sensor)
         self.audio_manager.set_pressure(pressure)
 
-        print(f"[ACTIVE] sensor={sensor} pressure={pressure}%")
+        state = "configured" if selected else "NOT CONFIGURED"
+        print(
+            f"[ACTIVE] sensor={sensor} pressure={pressure}% amp={state}"
+        )
 
     def pressure_update(self, sensor, pressure):
         sensor = int(sensor)
