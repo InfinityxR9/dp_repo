@@ -45,6 +45,9 @@ stop_event = threading.Event()
 class PlayRequest(BaseModel):
     soundId: str
 
+class VolumeRequest(BaseModel):
+    volume: float
+
 
 # -----------------------------------------------------------------------------
 # Background workers
@@ -127,11 +130,15 @@ def health():
 def state():
     sensor_state = sensor_manager.get_state()
     return {
-        "running": True,
+        "running": audio_manager.current_sound is not None,
         "activeSensor": sensor_state["activeSensor"],
         "pressure": sensor_state["pressure"],
         "soundId": Path(audio_manager.current_sound).name if audio_manager.current_sound else None,
         "audioVolume": round(audio_manager.get_volume(), 4),
+        "masterVolume": round(
+            audio_manager.get_master_volume(),
+            4
+        ),
     }
 
 
@@ -170,6 +177,24 @@ def stop():
     audio_manager.stop()
     print("[STOP]")
     return {"success": True, "message": "stopped"}
+
+@app.post("/api/volume")
+def set_volume(request: VolumeRequest):
+    if not 0.0 <= request.volume <= 1.0:
+        raise HTTPException(
+            status_code=400,
+            detail="volume must be between 0.0 and 1.0",
+        )
+
+    audio_manager.set_master_volume(
+        request.volume
+    )
+
+    return {
+        "success": True,
+        "message": "master volume updated",
+        "volume": audio_manager.get_master_volume(),
+    }
 
 
 @app.post("/api/select/{location}")

@@ -41,6 +41,9 @@ import com.naresh.lungsdemo.network.RetrofitClient
 import com.naresh.lungsdemo.network.SpeakerApiService
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
 import kotlinx.coroutines.launch
+import androidx.compose.material3.Slider
+import androidx.compose.runtime.mutableFloatStateOf
+import com.naresh.lungsdemo.model.VolumeRequest
 
 class MainScreen : ComponentActivity() {
 
@@ -75,6 +78,9 @@ fun SpeakerControlScreen() {
     var isLoading by remember { mutableStateOf(false) }
     var currentStatus by remember { mutableStateOf<String?>(null) }
 
+    var masterVolume by remember {
+        mutableFloatStateOf(1f)
+    }
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = colorResource(R.color.background)
@@ -113,15 +119,32 @@ fun SpeakerControlScreen() {
                         isLoading = true
 
                         try {
-                            apiService.playSound(
+                            val response = apiService.playSound(
                                 PlayRequest(soundId = id)
                             )
+
+                            if (response.isSuccessful) {
+                                Toast.makeText(
+                                    context,
+                                    response.body()?.message
+                                        ?: "$name sound started",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Failed to play $name: ${response.code()}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
                         } catch (e: Exception) {
                             Toast.makeText(
                                 context,
-                                "Error: ${e.localizedMessage}",
+                                "Connection error: ${e.localizedMessage}",
                                 Toast.LENGTH_SHORT
                             ).show()
+
                         } finally {
                             isLoading = false
                         }
@@ -130,6 +153,50 @@ fun SpeakerControlScreen() {
             }
 
             Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Master Volume: ${(masterVolume * 100).toInt()}%",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Slider(
+                value = masterVolume,
+                onValueChange = { volume ->
+                    masterVolume = volume
+                },
+                onValueChangeFinished = {
+                    coroutineScope.launch {
+                        try {
+                            val response = apiService.setVolume(
+                                VolumeRequest(
+                                    volume = masterVolume
+                                )
+                            )
+
+                            if (response.isSuccessful) {
+                                currentStatus =
+                                    "Master volume set to ${(masterVolume * 100).toInt()}%"
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Failed to set volume: ${response.code()}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                        } catch (e: Exception) {
+                            Toast.makeText(
+                                context,
+                                "Volume connection error: ${e.localizedMessage}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                },
+                valueRange = 0f..1f,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Button(
                 onClick = {
@@ -190,12 +257,13 @@ fun SpeakerControlScreen() {
                                 val status = response.body()
 
                                 val message = """
-                        Running: ${status?.running}
-                        Active Sensor: ${status?.activeSensor ?: "None"}
-                        Pressure: ${status?.pressure ?: 0}%
-                        Sound: ${status?.soundId ?: "None"}
-                        Audio Volume: ${status?.audioVolume ?: 0f}
-                    """.trimIndent()
+    Running: ${status?.running}
+    Active Sensor: ${status?.activeSensor ?: "None"}
+    Pressure: ${status?.pressure ?: 0}%
+    Sound: ${status?.soundId ?: "None"}
+    Audio Volume: ${status?.audioVolume ?: 0f}
+    Master Volume: ${((status?.masterVolume ?: 0f) * 100).toInt()}%
+""".trimIndent()
 
                                 Toast.makeText(
                                     context,
