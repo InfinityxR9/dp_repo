@@ -17,11 +17,11 @@ SERIAL_RECONNECT_DELAY = 1.0
 # Fill these in only after physically wiring each SD_MODE pin.
 # None means that location is not yet configured.
 AMP_SD_PINS = {
-    1: None,
-    2: None,
-    3: None,
-    4: None,
-    5: None,
+    1: 4,
+    2: 16,
+    3: 6,
+    4: 12,
+    5: 13,
     6: None,
     7: None,
 }

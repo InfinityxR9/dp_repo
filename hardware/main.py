@@ -36,7 +36,6 @@ audio_manager = AudioManager(
     stethoscope_max=STETHOSCOPE_MAX_VOLUME,
     test_max=TEST_MAX_VOLUME,
     smoothing=VOLUME_SMOOTHING,
-    device_name=AUDIO_DEVICE,
     default_mode=DEFAULT_VOLUME_MODE,
     default_multiplier=DEFAULT_VOLUME_MULTIPLIER,
 )
