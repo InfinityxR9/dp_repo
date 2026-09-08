@@ -69,6 +69,7 @@ class MainScreen : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun SpeakerControlScreen() {
 
@@ -87,7 +88,7 @@ fun SpeakerControlScreen() {
         mutableStateOf<String?>(null)
     }
 
-    var masterVolume by remember {
+    var masterMultiplier by remember {
         mutableFloatStateOf(1f)
     }
 
@@ -306,7 +307,7 @@ fun SpeakerControlScreen() {
 
             Text(
                 text =
-                    "Master Volume: ${(masterVolume * 100).toInt()}%",
+                    "Master Volume: ${(masterMultiplier * 100).toInt()}%",
 
                 style = MaterialTheme.typography.titleMedium,
 
@@ -315,10 +316,10 @@ fun SpeakerControlScreen() {
 
 
             Slider(
-                value = masterVolume,
+                value = masterMultiplier,
 
                 onValueChange = { volume ->
-                    masterVolume = volume
+                    masterMultiplier = volume
                 },
 
                 onValueChangeFinished = {
@@ -330,7 +331,7 @@ fun SpeakerControlScreen() {
                             val response =
                                 apiService.setVolume(
                                     VolumeRequest(
-                                        volume = masterVolume
+                                        volume = masterMultiplier
                                     )
                                 )
 
@@ -338,7 +339,7 @@ fun SpeakerControlScreen() {
 
                                 currentStatus =
                                     "Master volume set to " +
-                                            "${(masterVolume * 100).toInt()}%"
+                                            "${(masterMultiplier * 100).toInt()}%"
 
                             } else {
 
@@ -460,7 +461,7 @@ fun SpeakerControlScreen() {
                                     Pressure: ${status?.pressure ?: 0}%
                                     Sound: ${status?.soundId ?: "None"}
                                     Audio Volume: ${status?.audioVolume ?: 0f}
-                                    Master Volume: ${((status?.masterVolume ?: 0f) * 100).toInt()}%
+                                    Master Volume: ${((status?.masterMultiplier ?: 0f) * 100).toInt()}%
                                 """.trimIndent()
 
                                 Toast.makeText(

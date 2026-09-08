@@ -6,5 +6,5 @@ data class StatusResponse(
     val pressure: Int,
     val soundId: String?,
     val audioVolume: Float,
-    val masterVolume: Float
+    val masterMultiplier: Float
 )
