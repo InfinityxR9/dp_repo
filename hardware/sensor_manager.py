@@ -41,8 +41,21 @@ class SensorManager:
         pressure = max(0, min(100, int(pressure)))
 
         with self._lock:
-            if sensor != self.active_sensor:
-                return
+            active_sensor = self.active_sensor
+
+    # If no sensor is currently active, treat the first pressure
+    # event as the activation event. This makes the first piezo hit
+    # after /api/play immediately produce sound.
+        if active_sensor is None:
+            self.activation(sensor, pressure)
+            return
+
+    # If another sensor is already active, ignore pressure from
+    # non-active sensors. A proper A event will switch the location.
+        if sensor != active_sensor:
+            return
+
+        with self._lock:
             self.pressure = pressure
 
         self.audio_manager.set_pressure(pressure)

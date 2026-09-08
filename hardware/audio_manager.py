@@ -224,6 +224,7 @@ class AudioManager:
                     4,
                 ),
                 "playing": self.playing,
+                "pygameBusy": pygame.mixer.music.get_busy(),
                 "sound": self.current_sound,
             }
 

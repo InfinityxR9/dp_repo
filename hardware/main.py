@@ -417,6 +417,47 @@ def select_location(location: int):
         "pressure": 0,
     }
 
+@app.post("/api/test/song")
+def test_song():
+    """
+    Start the known-good test song for piezo/volume testing.
+
+    The song loops silently until a piezo event arrives.
+    Piezo pressure then controls its volume.
+    """
+    path = Path(TEST_SONG)
+
+    if not path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Test song not found: {path}",
+        )
+
+    try:
+        # Reset Pi-side sensor/amplifier state.
+        sensor_manager.stop()
+
+        # Make the test clearly audible.
+        audio_manager.set_mode("test")
+        audio_manager.set_multiplier(1.0)
+
+        # Start looping song silently.
+        audio_manager.play(path)
+
+        return {
+            "success": True,
+            "message": "piezo volume test started",
+            "sound": path.name,
+            "mode": "test",
+            "multiplier": 1.0,
+            "instruction": "Press a piezo sensor to control volume",
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=str(exc),
+        ) from exc
 
 if __name__ == "__main__":
     uvicorn.run(

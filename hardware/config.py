@@ -66,6 +66,7 @@ AUDIO_FILES = {
     "pleural_rub": AUDIO_DIR / "pleural_rub.wav",
     "ronchi": AUDIO_DIR / "ronchi.wav",
 }
+TEST_SONG = Path(__file__).resolve().parent / "Without Me.wav"
 
 DEFAULT_SOUND_ID = "vesicular"
 
