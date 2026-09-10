@@ -39,4 +39,8 @@ interface SpeakerApiService {
     suspend fun selectLocation(
         @Path("location") location: Int
     ): Response<ApiResponse>
+
+    @POST("api/test/song")
+    suspend fun testSong(): Response<ApiResponse>
+
 }

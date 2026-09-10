@@ -51,7 +51,7 @@ import kotlinx.coroutines.launch
 class MainScreen : ComponentActivity() {
 
     companion object {
-        const val BASE_URL = "http://10.230.233.226:8000/"
+        const val BASE_URL = "http://10.45.146.226:8000/"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -429,6 +429,93 @@ fun SpeakerControlScreen() {
 
                 Text(
                     text = "Stop Sound",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // ---------------------------------------------------------
+// TEST PIEZO SONG
+// ---------------------------------------------------------
+
+            Button(
+                onClick = {
+
+                    coroutineScope.launch {
+
+                        isLoading = true
+
+                        try {
+
+                            val response =
+                                apiService.testSong()
+
+                            if (response.isSuccessful) {
+
+                                val body = response.body()
+
+                                if (body?.success == true) {
+
+                                    selectedSoundId = "test_song"
+                                    selectedSoundName = "Piezo Volume Test"
+
+                                    Toast.makeText(
+                                        context,
+                                        body.message,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+
+                                } else {
+
+                                    Toast.makeText(
+                                        context,
+                                        body?.message
+                                            ?: "Failed to start test song",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+
+                            } else {
+
+                                val errorMessage =
+                                    response.errorBody()
+                                        ?.string()
+                                        ?: "Unknown server error"
+
+                                Toast.makeText(
+                                    context,
+                                    "Failed to start test song: ${response.code()} - $errorMessage",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+
+                        } catch (e: Exception) {
+
+                            Toast.makeText(
+                                context,
+                                "Connection error: ${e.localizedMessage}",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                        } finally {
+
+                            isLoading = false
+                        }
+                    }
+                },
+
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+
+                shape = RoundedCornerShape(12.dp),
+
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6D5A9E)
+                )
+            ) {
+
+                Text(
+                    text = "Test Piezo Volume",
                     fontWeight = FontWeight.Bold
                 )
             }
