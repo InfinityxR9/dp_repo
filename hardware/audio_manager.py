@@ -1,4 +1,18 @@
 import os
+
+# Explicitly use ALSA and the MAX98357A I2S amplifier.
+# These must be set BEFORE pygame is imported.
+os.environ["SDL_AUDIODRIVER"] = "alsa"
+os.environ["AUDIODEV"] = "plughw:CARD=MAX98357A,DEV=0"
+
+import time
+
+from pathlib import Path
+from threading import Lock
+from typing import Optional
+
+import pygame
+import os
 import time
 from pathlib import Path
 from threading import Lock
