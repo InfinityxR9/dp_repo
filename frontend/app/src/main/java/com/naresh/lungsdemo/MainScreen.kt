@@ -40,18 +40,17 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.naresh.lungsdemo.model.PlayRequest
-import com.naresh.lungsdemo.model.VolumeRequest
 import com.naresh.lungsdemo.network.RetrofitClient
 import com.naresh.lungsdemo.network.SpeakerApiService
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
 import kotlinx.coroutines.launch
+import com.naresh.lungsdemo.data.repository.TrainerRepository
 
 
 class MainScreen : ComponentActivity() {
 
     companion object {
-        const val BASE_URL = "http://10.45.146.226:8000/"
+        const val BASE_URL = "http://10.60.238.226:8000/"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,6 +76,7 @@ fun SpeakerControlScreen() {
 
     val apiService: SpeakerApiService =
         RetrofitClient.getRetrofitInstance(MainScreen.BASE_URL)
+    val repository = TrainerRepository(apiService)
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -168,11 +168,7 @@ fun SpeakerControlScreen() {
                             try {
 
                                 val response =
-                                    apiService.playSound(
-                                        PlayRequest(
-                                            soundId = id
-                                        )
-                                    )
+                                    repository.playSound(id)
 
                                 if (response.isSuccessful) {
 
@@ -234,11 +230,7 @@ fun SpeakerControlScreen() {
                                     try {
 
                                         val response =
-                                            apiService.playSound(
-                                                PlayRequest(
-                                                    soundId = id
-                                                )
-                                            )
+                                            repository.playSound(id)
 
                                         if (response.isSuccessful) {
 
@@ -329,11 +321,7 @@ fun SpeakerControlScreen() {
                         try {
 
                             val response =
-                                apiService.setVolume(
-                                    VolumeRequest(
-                                        volume = masterMultiplier
-                                    )
-                                )
+                                repository.setVolume(masterMultiplier)
 
                             if (response.isSuccessful) {
 
@@ -382,7 +370,7 @@ fun SpeakerControlScreen() {
                         try {
 
                             val response =
-                                apiService.stopSound()
+                                repository.stopSound()
 
                             if (response.isSuccessful) {
 
@@ -447,7 +435,7 @@ fun SpeakerControlScreen() {
                         try {
 
                             val response =
-                                apiService.testSong()
+                                repository.testSong()
 
                             if (response.isSuccessful) {
 
@@ -535,7 +523,7 @@ fun SpeakerControlScreen() {
                         try {
 
                             val response =
-                                apiService.getStatus()
+                                repository.getStatus()
 
                             if (response.isSuccessful) {
 
@@ -614,7 +602,7 @@ fun SpeakerControlScreen() {
                         try {
 
                             val response =
-                                apiService.health()
+                                repository.health()
 
                             if (response.isSuccessful) {
 
