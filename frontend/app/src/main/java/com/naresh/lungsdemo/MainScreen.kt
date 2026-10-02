@@ -40,12 +40,11 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.naresh.lungsdemo.model.PlayRequest
-import com.naresh.lungsdemo.model.VolumeRequest
 import com.naresh.lungsdemo.network.RetrofitClient
 import com.naresh.lungsdemo.network.SpeakerApiService
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
 import kotlinx.coroutines.launch
+import com.naresh.lungsdemo.data.repository.TrainerRepository
 
 
 class MainScreen : ComponentActivity() {
@@ -77,6 +76,7 @@ fun SpeakerControlScreen() {
 
     val apiService: SpeakerApiService =
         RetrofitClient.getRetrofitInstance(MainScreen.BASE_URL)
+    val repository = TrainerRepository(apiService)
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -168,11 +168,7 @@ fun SpeakerControlScreen() {
                             try {
 
                                 val response =
-                                    apiService.playSound(
-                                        PlayRequest(
-                                            soundId = id
-                                        )
-                                    )
+                                    repository.playSound(id)
 
                                 if (response.isSuccessful) {
 
@@ -234,11 +230,7 @@ fun SpeakerControlScreen() {
                                     try {
 
                                         val response =
-                                            apiService.playSound(
-                                                PlayRequest(
-                                                    soundId = id
-                                                )
-                                            )
+                                            repository.playSound(id)
 
                                         if (response.isSuccessful) {
 
@@ -328,12 +320,7 @@ fun SpeakerControlScreen() {
 
                         try {
 
-                            val response =
-                                apiService.setVolume(
-                                    VolumeRequest(
-                                        volume = masterVolume
-                                    )
-                                )
+                            val response = repository.setVolume(masterVolume)
 
                             if (response.isSuccessful) {
 
@@ -382,7 +369,7 @@ fun SpeakerControlScreen() {
                         try {
 
                             val response =
-                                apiService.stopSound()
+                                repository.stopSound()
 
                             if (response.isSuccessful) {
 
@@ -433,49 +420,51 @@ fun SpeakerControlScreen() {
                 )
             }
 
-
-            // ---------------------------------------------------------
-            // CHECK STATUS
-            // ---------------------------------------------------------
+// ---------------------------------------------------------
+// TEST PIEZO SONG
+// ---------------------------------------------------------
 
             Button(
                 onClick = {
-
                     coroutineScope.launch {
-
                         isLoading = true
 
                         try {
-
                             val response =
-                                apiService.getStatus()
+                                repository.testSong()
 
                             if (response.isSuccessful) {
+                                val body = response.body()
 
-                                val status =
-                                    response.body()
+                                if (body?.success == true) {
+                                    selectedSoundId = "test_song"
+                                    selectedSoundName = "Piezo Volume Test"
 
-                                val message = """
-                                    Running: ${status?.running}
-                                    Active Sensor: ${status?.activeSensor ?: "None"}
-                                    Pressure: ${status?.pressure ?: 0}%
-                                    Sound: ${status?.soundId ?: "None"}
-                                    Audio Volume: ${status?.audioVolume ?: 0f}
-                                    Master Volume: ${((status?.masterVolume ?: 0f) * 100).toInt()}%
-                                """.trimIndent()
+                                    Toast.makeText(
+                                        context,
+                                        body.message,
+                                        Toast.LENGTH_LONG
+                                    ).show()
 
-                                Toast.makeText(
-                                    context,
-                                    message,
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        body?.message
+                                            ?: "Failed to start test song",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
 
                             } else {
+                                val errorMessage =
+                                    response.errorBody()
+                                        ?.string()
+                                        ?: "Unknown server error"
 
                                 Toast.makeText(
                                     context,
-                                    "Failed to get status: ${response.code()}",
-                                    Toast.LENGTH_SHORT
+                                    "Failed to start test song: ${response.code()} - $errorMessage",
+                                    Toast.LENGTH_LONG
                                 ).show()
                             }
 
@@ -484,11 +473,10 @@ fun SpeakerControlScreen() {
                             Toast.makeText(
                                 context,
                                 "Connection error: ${e.localizedMessage}",
-                                Toast.LENGTH_SHORT
+                                Toast.LENGTH_LONG
                             ).show()
 
                         } finally {
-
                             isLoading = false
                         }
                     }
@@ -498,20 +486,17 @@ fun SpeakerControlScreen() {
                     .fillMaxWidth()
                     .height(50.dp),
 
-                shape = RoundedCornerShape(12.dp)
-            ) {
+                shape = RoundedCornerShape(12.dp),
 
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6D5A9E)
+                )
+            ) {
                 Text(
-                    text = "Check Status",
+                    text = "Test Piezo Volume",
                     fontWeight = FontWeight.Bold
                 )
             }
-
-
-            Spacer(
-                modifier = Modifier.height(10.dp)
-            )
-
 
             // ---------------------------------------------------------
             // CHECK RASPBERRY PI CONNECTION
@@ -527,7 +512,7 @@ fun SpeakerControlScreen() {
                         try {
 
                             val response =
-                                apiService.health()
+                                repository.health()
 
                             if (response.isSuccessful) {
 
