@@ -45,7 +45,8 @@ import com.naresh.lungsdemo.network.SpeakerApiService
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
 import kotlinx.coroutines.launch
 import com.naresh.lungsdemo.data.repository.TrainerRepository
-
+import com.naresh.lungsdemo.viewmodel.TrainerViewModel
+import androidx.compose.runtime.collectAsState
 
 class MainScreen : ComponentActivity() {
 
@@ -77,29 +78,19 @@ fun SpeakerControlScreen() {
     val apiService: SpeakerApiService =
         RetrofitClient.getRetrofitInstance(MainScreen.BASE_URL)
     val repository = TrainerRepository(apiService)
+    val viewModel = TrainerViewModel(repository)
+    val selectedSoundId by viewModel.selectedSoundId.collectAsState()
+    val selectedSoundName by viewModel.selectedSoundName.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
 
-    var isLoading by remember {
-        mutableStateOf(false)
-    }
+    val isLoading by viewModel.isLoading.collectAsState()
 
-    var currentStatus by remember {
-        mutableStateOf<String?>(null)
-    }
+    val currentStatus by viewModel.currentStatus.collectAsState()
 
     var masterVolume by remember {
         mutableFloatStateOf(1f)
     }
-
-    var selectedSoundId by remember {
-        mutableStateOf<String?>(null)
-    }
-
-    var selectedSoundName by remember {
-        mutableStateOf<String?>(null)
-    }
-
 
     val sounds = listOf(
         "bronchial" to "Bronchial",
@@ -163,7 +154,7 @@ fun SpeakerControlScreen() {
 
                         coroutineScope.launch {
 
-                            isLoading = true
+                            viewModel.startLoading()
 
                             try {
 
@@ -172,8 +163,7 @@ fun SpeakerControlScreen() {
 
                                 if (response.isSuccessful) {
 
-                                    selectedSoundId = id
-                                    selectedSoundName = name
+                                    viewModel.selectSound(id, name)
 
                                     Toast.makeText(
                                         context,
@@ -201,7 +191,7 @@ fun SpeakerControlScreen() {
 
                             } finally {
 
-                                isLoading = false
+                                viewModel.stopLoading()
                             }
                         }
                     }
@@ -225,7 +215,7 @@ fun SpeakerControlScreen() {
 
                                 coroutineScope.launch {
 
-                                    isLoading = true
+                                    viewModel.startLoading()
 
                                     try {
 
@@ -234,8 +224,7 @@ fun SpeakerControlScreen() {
 
                                         if (response.isSuccessful) {
 
-                                            selectedSoundId = id
-                                            selectedSoundName = name
+                                            viewModel.selectSound(id, name)
 
                                             Toast.makeText(
                                                 context,
@@ -263,7 +252,7 @@ fun SpeakerControlScreen() {
 
                                     } finally {
 
-                                        isLoading = false
+                                        viewModel.stopLoading()
                                     }
                                 }
                             }
@@ -324,9 +313,10 @@ fun SpeakerControlScreen() {
 
                             if (response.isSuccessful) {
 
-                                currentStatus =
+                                viewModel.setStatus(
                                     "Master volume set to " +
                                             "${(masterVolume * 100).toInt()}%"
+                                )
 
                             } else {
 
@@ -364,7 +354,7 @@ fun SpeakerControlScreen() {
 
                     coroutineScope.launch {
 
-                        isLoading = true
+                        viewModel.startLoading()
 
                         try {
 
@@ -373,8 +363,7 @@ fun SpeakerControlScreen() {
 
                             if (response.isSuccessful) {
 
-                                selectedSoundId = null
-                                selectedSoundName = null
+                                viewModel.clearSelectedSound()
 
                                 Toast.makeText(
                                     context,
@@ -402,7 +391,7 @@ fun SpeakerControlScreen() {
 
                         } finally {
 
-                            isLoading = false
+                            viewModel.stopLoading()
                         }
                     }
                 },
@@ -429,7 +418,7 @@ fun SpeakerControlScreen() {
 
                     coroutineScope.launch {
 
-                        isLoading = true
+                        viewModel.startLoading()
 
                         try {
 
@@ -467,7 +456,7 @@ fun SpeakerControlScreen() {
 
                         } finally {
 
-                            isLoading = false
+                            viewModel.stopLoading()
                         }
                     }
                 },
