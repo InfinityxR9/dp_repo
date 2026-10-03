@@ -1,10 +1,12 @@
 package com.naresh.lungsdemo.viewmodel
-
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+
 import com.naresh.lungsdemo.data.repository.TrainerRepository
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class TrainerViewModel(
@@ -12,36 +14,36 @@ class TrainerViewModel(
 ) : ViewModel() {
 
     private val _selectedSoundId = MutableStateFlow<String?>(null)
-    val selectedSoundId: StateFlow<String?> = _selectedSoundId
+    val selectedSoundId: StateFlow<String?> = _selectedSoundId.asStateFlow()
 
     private val _selectedSoundName = MutableStateFlow<String?>(null)
-    val selectedSoundName: StateFlow<String?> = _selectedSoundName
+    val selectedSoundName: StateFlow<String?> = _selectedSoundName.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    fun selectSound(soundId: String, soundName: String) {
+    private fun selectSound(soundId: String, soundName: String) {
         _selectedSoundId.value = soundId
         _selectedSoundName.value = soundName
     }
 
-    fun clearSelectedSound() {
+    private fun clearSelectedSound() {
         _selectedSoundId.value = null
         _selectedSoundName.value = null
     }
 
-    fun startLoading() {
+    private fun startLoading() {
         _isLoading.value = true
     }
 
-    fun stopLoading() {
+    private fun stopLoading() {
         _isLoading.value = false
     }
 
     private val _currentStatus = MutableStateFlow<String?>(null)
-    val currentStatus: StateFlow<String?> = _currentStatus
+    val currentStatus: StateFlow<String?> = _currentStatus.asStateFlow()
 
-    fun setStatus(status: String?) {
+    private fun setStatus(status: String?) {
         _currentStatus.value = status
     }
 
