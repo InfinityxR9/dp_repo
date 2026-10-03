@@ -43,12 +43,14 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.naresh.lungsdemo.data.repository.TrainerRepository
 import com.naresh.lungsdemo.network.RetrofitClient
 import com.naresh.lungsdemo.network.SpeakerApiService
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
 import com.naresh.lungsdemo.viewmodel.TrainerViewModel
+import com.naresh.lungsdemo.viewmodel.TrainerViewModelFactory
 
 class MainScreen : ComponentActivity() {
 
@@ -79,8 +81,14 @@ fun SpeakerControlScreen() {
 
     val apiService: SpeakerApiService =
         RetrofitClient.getRetrofitInstance(MainScreen.BASE_URL)
+
     val repository = TrainerRepository(apiService)
-    val viewModel = TrainerViewModel(repository)
+
+    val factory = TrainerViewModelFactory(repository)
+
+    val viewModel: TrainerViewModel = viewModel(
+        factory = factory
+    )
     val selectedSoundId by viewModel.selectedSoundId.collectAsState()
     val selectedSoundName by viewModel.selectedSoundName.collectAsState()
 
