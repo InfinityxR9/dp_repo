@@ -7,22 +7,29 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 
+
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,10 +43,8 @@ import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,6 +56,7 @@ import com.naresh.lungsdemo.network.SpeakerApiService
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
 import com.naresh.lungsdemo.viewmodel.TrainerViewModel
 import com.naresh.lungsdemo.viewmodel.TrainerViewModelFactory
+
 
 class MainScreen : ComponentActivity() {
 
@@ -89,6 +95,7 @@ fun SpeakerControlScreen() {
     val viewModel: TrainerViewModel = viewModel(
         factory = factory
     )
+
     val selectedSoundId by viewModel.selectedSoundId.collectAsState()
     val selectedSoundName by viewModel.selectedSoundName.collectAsState()
 
@@ -120,52 +127,151 @@ fun SpeakerControlScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(
+                    top = 60.dp,
+                    start = 16.dp,
+                    end = 16.dp
+                ),
 
             horizontalAlignment = Alignment.CenterHorizontally,
 
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
 
-            Spacer(
-                modifier = Modifier.height(50.dp)
-            )
+            // ---------------------------------------------------------
+            // HEADER
+            // ---------------------------------------------------------
+
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Text(
+                    text = "LUNG LAB",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                Spacer(
+                    modifier = Modifier.height(3.dp)
+                )
+
+                Text(
+                    text = "Auscultation Trainer",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(
+                    modifier = Modifier.height(3.dp)
+                )
+
+                Text(
+                    text = "Train. Listen. Diagnose.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
 
             // ---------------------------------------------------------
-            // TITLE
+            // NOW PLAYING
             // ---------------------------------------------------------
 
-            Text(
-                text = "Disease Sound Controller",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                fontStyle = FontStyle.Normal
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+
+                shape = RoundedCornerShape(18.dp),
+
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline
+                )
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+
+                    Text(
+                        text = "NOW PLAYING",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(6.dp)
+                    )
+
+                    Text(
+                        text = selectedSoundName ?: "No sound selected",
+
+                        style = MaterialTheme.typography.titleLarge,
+
+                        fontWeight = FontWeight.Bold,
+
+                        color = if (selectedSoundName != null) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(3.dp)
+                    )
+
+                    Text(
+                        text = if (selectedSoundName != null) {
+                            "Currently playing"
+                        } else {
+                            "Select a lung sound to begin"
+                        },
+
+                        style = MaterialTheme.typography.bodyMedium,
+
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
 
             // ---------------------------------------------------------
-            // DISEASE SOUND BUTTONS
+            // LUNG SOUNDS
             // ---------------------------------------------------------
 
-            sounds.chunked(2).forEach { rowSounds ->
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
 
-                if (rowSounds.size == 1) {
+                Text(
+                    text = "LUNG SOUNDS",
 
-                    val (id, name) = rowSounds.first()
+                    style = MaterialTheme.typography.labelLarge,
 
-                    DiseaseButton(
-                        diseaseName = name,
-                        isSelected = selectedSoundId == id,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        viewModel.playSound(id, name)
-                    }
+                    fontWeight = FontWeight.SemiBold,
 
-                } else {
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                sounds.chunked(2).forEach { rowSounds ->
 
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
 
@@ -173,11 +279,20 @@ fun SpeakerControlScreen() {
 
                             DiseaseButton(
                                 diseaseName = name,
+
                                 isSelected = selectedSoundId == id,
+
                                 modifier = Modifier.weight(1f)
                             ) {
                                 viewModel.playSound(id, name)
                             }
+                        }
+
+                        if (rowSounds.size == 1) {
+
+                            Spacer(
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
@@ -185,103 +300,161 @@ fun SpeakerControlScreen() {
 
 
             // ---------------------------------------------------------
-            // CURRENTLY PLAYING
+            // AUDIO
             // ---------------------------------------------------------
 
-            Text(
-                text = selectedSoundName?.let {
-                    "Currently Playing: $it"
-                } ?: "Currently Playing: None",
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
 
-                style = MaterialTheme.typography.titleMedium,
+                Text(
+                    text = "AUDIO",
 
-                fontWeight = FontWeight.Bold
-            )
+                    style = MaterialTheme.typography.labelLarge,
 
+                    fontWeight = FontWeight.SemiBold,
 
-            Spacer(
-                modifier = Modifier.height(10.dp)
-            )
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
-            // ---------------------------------------------------------
-            // MASTER VOLUME
-            // ---------------------------------------------------------
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
 
-            Text(
-                text =
-                    "Master Volume: ${(masterVolume * 100).toInt()}%",
+                    shape = RoundedCornerShape(18.dp),
 
-                style = MaterialTheme.typography.titleMedium,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
 
-                fontWeight = FontWeight.Bold
-            )
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline
+                    )
+                ) {
 
+                    Column(
+                        modifier = Modifier.padding(
+                            horizontal = 16.dp,
+                            vertical = 12.dp
+                        )
+                    ) {
 
-            Slider(
-                value = masterVolume,
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
 
-                onValueChange = { volume ->
-                    masterVolume = volume
-                },
+                            horizontalArrangement =
+                                Arrangement.SpaceBetween
+                        ) {
 
-                onValueChangeFinished = {
+                            Text(
+                                text = "Master Volume",
 
-                    viewModel.setVolume(masterVolume)
-                },
+                                style =
+                                    MaterialTheme.typography.titleMedium,
 
-                valueRange = 0f..1f,
+                                fontWeight =
+                                    FontWeight.SemiBold
+                            )
 
-                modifier =
-                    Modifier.fillMaxWidth()
-            )
+                            Text(
+                                text =
+                                    "${(masterVolume * 100).toInt()}%",
+
+                                style =
+                                    MaterialTheme.typography.titleMedium,
+
+                                fontWeight =
+                                    FontWeight.Bold,
+
+                                color =
+                                    MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        Slider(
+                            value = masterVolume,
+
+                            onValueChange = { volume ->
+                                masterVolume = volume
+                            },
+
+                            onValueChangeFinished = {
+                                viewModel.setVolume(masterVolume)
+                            },
+
+                            valueRange = 0f..1f,
+
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
 
 
             // ---------------------------------------------------------
             // STOP SOUND
             // ---------------------------------------------------------
 
-            Button(
+            OutlinedButton(
                 onClick = {
                     viewModel.stopSound()
                 },
 
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(48.dp),
 
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp),
+
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.error
+                ),
+
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
             ) {
 
                 Text(
                     text = "Stop Sound",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
             }
+
 
             // ---------------------------------------------------------
             // CHECK RASPBERRY PI CONNECTION
             // ---------------------------------------------------------
 
-            Button(
+            OutlinedButton(
                 onClick = {
-
                     viewModel.checkConnection()
                 },
 
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(48.dp),
 
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(16.dp),
+
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline
+                ),
+
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
             ) {
 
                 Text(
-                    text =
-                        "Check Raspberry Pi Connection",
-
-                    fontWeight =
-                        FontWeight.Bold
+                    text = "Check Raspberry Pi Connection",
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
@@ -301,36 +474,47 @@ fun SpeakerControlScreen() {
                     )
                 },
 
-                shape =
-                    RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp),
 
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(48.dp),
 
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor =
-                            colorResource(
-                                R.color.buttonColor
-                            )
-                    )
+                colors = ButtonDefaults.buttonColors(
+                    containerColor =
+                        MaterialTheme.colorScheme.primary,
+
+                    contentColor =
+                        MaterialTheme.colorScheme.onPrimary
+                )
             ) {
 
                 Text(
                     text = "Take Quiz",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
+
+            // ---------------------------------------------------------
+            // STATUS
+            // ---------------------------------------------------------
 
             currentStatus?.let {
 
                 Text(
-                    text = it
+                    text = it,
+
+                    style = MaterialTheme.typography.bodySmall,
+
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
+
+            // ---------------------------------------------------------
+            // LOADING
+            // ---------------------------------------------------------
 
             if (isLoading) {
 
@@ -339,7 +523,7 @@ fun SpeakerControlScreen() {
 
 
             Spacer(
-                modifier = Modifier.height(20.dp)
+                modifier = Modifier.height(12.dp)
             )
         }
     }
@@ -358,32 +542,74 @@ fun DiseaseButton(
     onClick: () -> Unit
 ) {
 
-    Button(
+    Card(
+        modifier = modifier.height(62.dp),
+
         onClick = onClick,
 
-        shape =
-            RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(18.dp),
 
-        modifier =
-            modifier.height(50.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
 
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor =
-                    if (isSelected) {
-                        Color(0xFF1E3A8A)
-                    } else {
-                        colorResource(
-                            R.color.buttonColor
-                        )
-                    }
-            )
+                MaterialTheme.colorScheme.primaryContainer
+
+            } else {
+
+                MaterialTheme.colorScheme.surfaceVariant
+                    .copy(alpha = 0.55f)
+            }
+        ),
+
+        border = BorderStroke(
+            width = if (isSelected) {
+                2.dp
+            } else {
+                1.dp
+            },
+
+            color = if (isSelected) {
+
+                MaterialTheme.colorScheme.primary
+
+            } else {
+
+                MaterialTheme.colorScheme.outline
+            }
+        )
     ) {
 
-        Text(
-            text = diseaseName,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Text(
+                text = if (isSelected) {
+                    "●  $diseaseName"
+                } else {
+                    diseaseName
+                },
+
+                modifier = Modifier.fillMaxWidth(),
+
+                style = MaterialTheme.typography.titleMedium,
+
+                fontWeight = FontWeight.SemiBold,
+
+                color = if (isSelected) {
+
+                    MaterialTheme.colorScheme.primary
+
+                } else {
+
+                    MaterialTheme.colorScheme.onSurface
+                }
+            )
+        }
     }
 }
 
