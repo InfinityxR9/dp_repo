@@ -25,7 +25,4 @@ class TrainerRepository(
 
     suspend fun selectLocation(location: Int) =
         api.selectLocation(location)
-
-    suspend fun testSong() =
-        api.testSong()
 }

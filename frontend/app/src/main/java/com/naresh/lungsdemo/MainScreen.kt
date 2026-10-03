@@ -2,10 +2,11 @@ package com.naresh.lungsdemo
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,13 +26,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,17 +43,19 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+import com.naresh.lungsdemo.data.repository.TrainerRepository
 import com.naresh.lungsdemo.network.RetrofitClient
 import com.naresh.lungsdemo.network.SpeakerApiService
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
-import kotlinx.coroutines.launch
-import com.naresh.lungsdemo.data.repository.TrainerRepository
-
+import com.naresh.lungsdemo.viewmodel.TrainerViewModel
+import com.naresh.lungsdemo.viewmodel.TrainerViewModelFactory
 
 class MainScreen : ComponentActivity() {
 
     companion object {
-        const val BASE_URL = "http://10.60.238.226:8000/"
+        const val BASE_URL = "http://10.230.233.226:8000/"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,30 +81,24 @@ fun SpeakerControlScreen() {
 
     val apiService: SpeakerApiService =
         RetrofitClient.getRetrofitInstance(MainScreen.BASE_URL)
+
     val repository = TrainerRepository(apiService)
 
-    val coroutineScope = rememberCoroutineScope()
+    val factory = TrainerViewModelFactory(repository)
 
-    var isLoading by remember {
-        mutableStateOf(false)
-    }
+    val viewModel: TrainerViewModel = viewModel(
+        factory = factory
+    )
+    val selectedSoundId by viewModel.selectedSoundId.collectAsState()
+    val selectedSoundName by viewModel.selectedSoundName.collectAsState()
 
-    var currentStatus by remember {
-        mutableStateOf<String?>(null)
-    }
+    val isLoading by viewModel.isLoading.collectAsState()
 
-    var masterMultiplier by remember {
+    val currentStatus by viewModel.currentStatus.collectAsState()
+
+    var masterVolume by remember {
         mutableFloatStateOf(1f)
     }
-
-    var selectedSoundId by remember {
-        mutableStateOf<String?>(null)
-    }
-
-    var selectedSoundName by remember {
-        mutableStateOf<String?>(null)
-    }
-
 
     val sounds = listOf(
         "bronchial" to "Bronchial",
@@ -160,59 +159,14 @@ fun SpeakerControlScreen() {
                         isSelected = selectedSoundId == id,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-
-                        coroutineScope.launch {
-
-                            isLoading = true
-
-                            try {
-
-                                val response =
-                                    repository.playSound(id)
-
-                                if (response.isSuccessful) {
-
-                                    selectedSoundId = id
-                                    selectedSoundName = name
-
-                                    Toast.makeText(
-                                        context,
-                                        response.body()?.message
-                                            ?: "$name sound started",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-
-                                } else {
-
-                                    Toast.makeText(
-                                        context,
-                                        "Failed to play $name: ${response.code()}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-
-                            } catch (e: Exception) {
-
-                                Toast.makeText(
-                                    context,
-                                    "Connection error: ${e.localizedMessage}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-
-                            } finally {
-
-                                isLoading = false
-                            }
-                        }
+                        viewModel.playSound(id, name)
                     }
 
                 } else {
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-
-                        horizontalArrangement =
-                            Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
 
                         rowSounds.forEach { (id, name) ->
@@ -222,50 +176,7 @@ fun SpeakerControlScreen() {
                                 isSelected = selectedSoundId == id,
                                 modifier = Modifier.weight(1f)
                             ) {
-
-                                coroutineScope.launch {
-
-                                    isLoading = true
-
-                                    try {
-
-                                        val response =
-                                            repository.playSound(id)
-
-                                        if (response.isSuccessful) {
-
-                                            selectedSoundId = id
-                                            selectedSoundName = name
-
-                                            Toast.makeText(
-                                                context,
-                                                response.body()?.message
-                                                    ?: "$name sound started",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-
-                                        } else {
-
-                                            Toast.makeText(
-                                                context,
-                                                "Failed to play $name: ${response.code()}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-
-                                    } catch (e: Exception) {
-
-                                        Toast.makeText(
-                                            context,
-                                            "Connection error: ${e.localizedMessage}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-
-                                    } finally {
-
-                                        isLoading = false
-                                    }
-                                }
+                                viewModel.playSound(id, name)
                             }
                         }
                     }
@@ -299,7 +210,7 @@ fun SpeakerControlScreen() {
 
             Text(
                 text =
-                    "Master Volume: ${(masterMultiplier * 100).toInt()}%",
+                    "Master Volume: ${(masterVolume * 100).toInt()}%",
 
                 style = MaterialTheme.typography.titleMedium,
 
@@ -308,45 +219,15 @@ fun SpeakerControlScreen() {
 
 
             Slider(
-                value = masterMultiplier,
+                value = masterVolume,
 
                 onValueChange = { volume ->
-                    masterMultiplier = volume
+                    masterVolume = volume
                 },
 
                 onValueChangeFinished = {
 
-                    coroutineScope.launch {
-
-                        try {
-
-                            val response =
-                                repository.setVolume(masterMultiplier)
-
-                            if (response.isSuccessful) {
-
-                                currentStatus =
-                                    "Master volume set to " +
-                                            "${(masterMultiplier * 100).toInt()}%"
-
-                            } else {
-
-                                Toast.makeText(
-                                    context,
-                                    "Failed to set volume: ${response.code()}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-
-                        } catch (e: Exception) {
-
-                            Toast.makeText(
-                                context,
-                                "Volume connection error: ${e.localizedMessage}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
+                    viewModel.setVolume(masterVolume)
                 },
 
                 valueRange = 0f..1f,
@@ -362,50 +243,7 @@ fun SpeakerControlScreen() {
 
             Button(
                 onClick = {
-
-                    coroutineScope.launch {
-
-                        isLoading = true
-
-                        try {
-
-                            val response =
-                                repository.stopSound()
-
-                            if (response.isSuccessful) {
-
-                                selectedSoundId = null
-                                selectedSoundName = null
-
-                                Toast.makeText(
-                                    context,
-                                    response.body()?.message
-                                        ?: "Sound stopped",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-
-                            } else {
-
-                                Toast.makeText(
-                                    context,
-                                    "Failed to stop sound: ${response.code()}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-
-                        } catch (e: Exception) {
-
-                            Toast.makeText(
-                                context,
-                                "Connection error: ${e.localizedMessage}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                        } finally {
-
-                            isLoading = false
-                        }
-                    }
+                    viewModel.stopSound()
                 },
 
                 modifier = Modifier
@@ -422,222 +260,13 @@ fun SpeakerControlScreen() {
             }
 
             // ---------------------------------------------------------
-// TEST PIEZO SONG
-// ---------------------------------------------------------
-
-            Button(
-                onClick = {
-
-                    coroutineScope.launch {
-
-                        isLoading = true
-
-                        try {
-
-                            val response =
-                                repository.testSong()
-
-                            if (response.isSuccessful) {
-
-                                val body = response.body()
-
-                                if (body?.success == true) {
-
-                                    selectedSoundId = "test_song"
-                                    selectedSoundName = "Piezo Volume Test"
-
-                                    Toast.makeText(
-                                        context,
-                                        body.message,
-                                        Toast.LENGTH_LONG
-                                    ).show()
-
-                                } else {
-
-                                    Toast.makeText(
-                                        context,
-                                        body?.message
-                                            ?: "Failed to start test song",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-
-                            } else {
-
-                                val errorMessage =
-                                    response.errorBody()
-                                        ?.string()
-                                        ?: "Unknown server error"
-
-                                Toast.makeText(
-                                    context,
-                                    "Failed to start test song: ${response.code()} - $errorMessage",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-
-                        } catch (e: Exception) {
-
-                            Toast.makeText(
-                                context,
-                                "Connection error: ${e.localizedMessage}",
-                                Toast.LENGTH_LONG
-                            ).show()
-
-                        } finally {
-
-                            isLoading = false
-                        }
-                    }
-                },
-
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-
-                shape = RoundedCornerShape(12.dp),
-
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF6D5A9E)
-                )
-            ) {
-
-                Text(
-                    text = "Test Piezo Volume",
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-
-            // ---------------------------------------------------------
-            // CHECK STATUS
-            // ---------------------------------------------------------
-
-            Button(
-                onClick = {
-
-                    coroutineScope.launch {
-
-                        isLoading = true
-
-                        try {
-
-                            val response =
-                                repository.getStatus()
-
-                            if (response.isSuccessful) {
-
-                                val status =
-                                    response.body()
-
-                                val message = """
-                                    Running: ${status?.running}
-                                    Active Sensor: ${status?.activeSensor ?: "None"}
-                                    Pressure: ${status?.pressure ?: 0}%
-                                    Sound: ${status?.soundId ?: "None"}
-                                    Audio Volume: ${status?.audioVolume ?: 0f}
-                                    Master Volume: ${((status?.masterMultiplier ?: 0f) * 100).toInt()}%
-                                """.trimIndent()
-
-                                Toast.makeText(
-                                    context,
-                                    message,
-                                    Toast.LENGTH_LONG
-                                ).show()
-
-                            } else {
-
-                                Toast.makeText(
-                                    context,
-                                    "Failed to get status: ${response.code()}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-
-                        } catch (e: Exception) {
-
-                            Toast.makeText(
-                                context,
-                                "Connection error: ${e.localizedMessage}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                        } finally {
-
-                            isLoading = false
-                        }
-                    }
-                },
-
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-
-                shape = RoundedCornerShape(12.dp)
-            ) {
-
-                Text(
-                    text = "Check Status",
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-
-            Spacer(
-                modifier = Modifier.height(10.dp)
-            )
-
-
-            // ---------------------------------------------------------
             // CHECK RASPBERRY PI CONNECTION
             // ---------------------------------------------------------
 
             Button(
                 onClick = {
 
-                    coroutineScope.launch {
-
-                        isLoading = true
-
-                        try {
-
-                            val response =
-                                repository.health()
-
-                            if (response.isSuccessful) {
-
-                                val health =
-                                    response.body()
-
-                                Toast.makeText(
-                                    context,
-                                    health?.message
-                                        ?: "Raspberry Pi Connected",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-
-                            } else {
-
-                                Toast.makeText(
-                                    context,
-                                    "Pi responded with error: ${response.code()}",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-
-                        } catch (e: Exception) {
-
-                            Toast.makeText(
-                                context,
-                                "Cannot connect to Raspberry Pi: ${e.localizedMessage}",
-                                Toast.LENGTH_LONG
-                            ).show()
-
-                        } finally {
-
-                            isLoading = false
-                        }
-                    }
+                    viewModel.checkConnection()
                 },
 
                 modifier = Modifier
