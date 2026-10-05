@@ -12,16 +12,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-
+import androidx.compose.foundation.layout.width
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,6 +54,8 @@ import com.naresh.lungsdemo.network.SpeakerApiService
 import com.naresh.lungsdemo.ui.theme.LungsdemoTheme
 import com.naresh.lungsdemo.viewmodel.TrainerViewModel
 import com.naresh.lungsdemo.viewmodel.TrainerViewModelFactory
+import com.naresh.lungsdemo.model.TrainerMode
+import com.naresh.lungsdemo.model.LungSound
 
 
 class MainScreen : ComponentActivity() {
@@ -96,25 +96,26 @@ fun SpeakerControlScreen() {
         factory = factory
     )
 
-    val selectedSoundId by viewModel.selectedSoundId.collectAsState()
-    val selectedSoundName by viewModel.selectedSoundName.collectAsState()
+    val selectedSound by viewModel.selectedSound.collectAsState()
 
     val isLoading by viewModel.isLoading.collectAsState()
 
     val currentStatus by viewModel.currentStatus.collectAsState()
+    val isPiConnected by viewModel.isPiConnected.collectAsState()
+    val trainerMode by viewModel.trainerMode.collectAsState()
 
     var masterVolume by remember {
         mutableFloatStateOf(1f)
     }
 
     val sounds = listOf(
-        "bronchial" to "Bronchial",
-        "vesicular" to "Vesicular",
-        "wheeze" to "Wheeze",
-        "crackle" to "Crackle",
-        "stridor" to "Stridor",
-        "pleural_rub" to "Pleural Rub",
-        "ronchi" to "Ronchi"
+        LungSound("bronchial", "Bronchial"),
+        LungSound("vesicular", "Vesicular"),
+        LungSound("wheeze", "Wheeze"),
+        LungSound("crackle", "Crackle"),
+        LungSound("stridor", "Stridor"),
+        LungSound("pleural_rub", "Pleural Rub"),
+        LungSound("ronchi", "Ronchi")
     )
 
 
@@ -173,6 +174,110 @@ fun SpeakerControlScreen() {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                Spacer(
+                    modifier = Modifier.height(6.dp)
+                )
+
+                if (isPiConnected != null) {
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text = "●",
+                            color = if (isPiConnected == true) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            },
+
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(
+                            modifier = Modifier.width(4.dp)
+                        )
+
+                        Text(
+                            text = if (isPiConnected == true) {
+                                "Raspberry Pi Connected"
+                            } else {
+                                "Raspberry Pi Not Connected"
+                            },
+
+                            style = MaterialTheme.typography.bodySmall,
+
+                            fontWeight = FontWeight.Medium,
+
+                            color = if (isPiConnected == true) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            }
+                        )
+                    }
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp)
+                ) {
+                    Text(
+                        text = "Training Mode",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = if (trainerMode == TrainerMode.TRAINING) {
+                            "Location is shown while you train."
+                        } else {
+                            "Location is hidden. Identify where the sound is playing."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ModeButton(
+                            text = "Training",
+                            selected = trainerMode == TrainerMode.TRAINING,
+                            onClick = {
+                                viewModel.setTrainerMode(TrainerMode.TRAINING)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        ModeButton(
+                            text = "Test",
+                            selected = trainerMode == TrainerMode.TEST,
+                            onClick = {
+                                viewModel.setTrainerMode(TrainerMode.TEST)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
             }
 
 
@@ -211,13 +316,13 @@ fun SpeakerControlScreen() {
                     )
 
                     Text(
-                        text = selectedSoundName ?: "No sound selected",
+                        text = selectedSound?.name ?: "No sound selected",
 
                         style = MaterialTheme.typography.titleLarge,
 
                         fontWeight = FontWeight.Bold,
 
-                        color = if (selectedSoundName != null) {
+                        color = if (selectedSound != null) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.onSurface
@@ -229,7 +334,7 @@ fun SpeakerControlScreen() {
                     )
 
                     Text(
-                        text = if (selectedSoundName != null) {
+                        text = if (selectedSound != null) {
                             "Currently playing"
                         } else {
                             "Select a lung sound to begin"
@@ -239,6 +344,27 @@ fun SpeakerControlScreen() {
 
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    if (selectedSound != null) {
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = if (trainerMode == TrainerMode.TEST) {
+                                "Identify the location where this sound is playing."
+                            } else if (selectedSound?.location != null) {
+                                "Location: ${selectedSound?.location?.displayName}"
+                            } else {
+                                "Location not configured"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = if (trainerMode == TrainerMode.TEST) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
                 }
             }
 
@@ -275,16 +401,16 @@ fun SpeakerControlScreen() {
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
 
-                        rowSounds.forEach { (id, name) ->
+                        rowSounds.forEach { sound ->
 
                             DiseaseButton(
-                                diseaseName = name,
+                                diseaseName = sound.name,
 
-                                isSelected = selectedSoundId == id,
+                                isSelected = selectedSound?.id == sound.id,
 
                                 modifier = Modifier.weight(1f)
                             ) {
-                                viewModel.playSound(id, name)
+                                viewModel.playSound(sound.id, sound.name)
                             }
                         }
 
@@ -297,7 +423,6 @@ fun SpeakerControlScreen() {
                     }
                 }
             }
-
 
             // ---------------------------------------------------------
             // AUDIO
@@ -526,6 +651,49 @@ fun SpeakerControlScreen() {
                 modifier = Modifier.height(12.dp)
             )
         }
+    }
+}
+
+@Composable
+private fun ModeButton(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = if (selected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+            contentColor = if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
+        ),
+        border = BorderStroke(
+            1.dp,
+            if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.outline
+            }
+        )
+    ) {
+        Text(
+            text = text,
+            fontWeight = if (selected) {
+                FontWeight.SemiBold
+            } else {
+                FontWeight.Medium
+            }
+        )
     }
 }
 
