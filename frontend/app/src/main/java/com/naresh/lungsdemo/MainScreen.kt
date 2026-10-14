@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +63,7 @@ class MainScreen : ComponentActivity() {
 
     companion object {
         const val BASE_URL = "http://10.230.233.226:8000/"
+        const val EXTRA_TRAINER_MODE = "extra_trainer_mode"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,10 +71,16 @@ class MainScreen : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        val initialMode = intent
+            .getStringExtra(EXTRA_TRAINER_MODE)
+            ?.let { modeName ->
+                runCatching { TrainerMode.valueOf(modeName) }.getOrNull()
+            } ?: TrainerMode.TRAINING
+
         setContent {
             LungsdemoTheme {
                 Surface {
-                    SpeakerControlScreen()
+                    SpeakerControlScreen(initialMode = initialMode)
                 }
             }
         }
@@ -81,7 +89,9 @@ class MainScreen : ComponentActivity() {
 
 
 @Composable
-fun SpeakerControlScreen() {
+fun SpeakerControlScreen(
+    initialMode: TrainerMode = TrainerMode.TRAINING
+) {
 
     val context = LocalContext.current
 
@@ -103,6 +113,9 @@ fun SpeakerControlScreen() {
     val currentStatus by viewModel.currentStatus.collectAsState()
     val isPiConnected by viewModel.isPiConnected.collectAsState()
     val trainerMode by viewModel.trainerMode.collectAsState()
+    LaunchedEffect(initialMode) {
+        viewModel.setTrainerMode(initialMode)
+    }
 
     var masterVolume by remember {
         mutableFloatStateOf(1f)
